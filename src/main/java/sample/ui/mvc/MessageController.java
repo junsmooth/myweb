@@ -36,6 +36,11 @@ import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +52,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.thymeleaf.util.StringUtils;
 
 import sample.ui.Message;
 import sample.ui.MessageRepository;
@@ -63,7 +69,8 @@ public class MessageController {
 
 	private final static String ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
 	private final static String AGENT = "Mozilla/5.0 (Windows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0";
-
+	private final static String ZHANGDAIYIXIAN="zhangdaiyixian";
+	private final static String ZHANGHUIFENG="zhanghuifeng";
 	@Autowired
 	public MessageController(MessageRepository messageRepository) {
 		this.messageRepository = messageRepository;
@@ -107,33 +114,110 @@ public class MessageController {
 
 	private void doClick(Message message) {
 
-		// get bid id
-//		String bidId = getBidId();
+		Date fabiaoTime = message.getBidOpenTime();
 
-		Worker w = new Worker(message);
-		Worker w2 = new Worker(message);
-		Worker w3 = new Worker(message);
-		Worker w4 = new Worker(message);
-		Worker w5 = new Worker(message);
-		ExecutorService service = Executors.newFixedThreadPool(5);
+		// get bid id
+		String bidId = "";
+
+		while (true) {
+			if (System.currentTimeMillis() < fabiaoTime.getTime()) {
+				try {
+					Thread.sleep(1000);
+					continue;
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+
+			bidId = getBidId(message);
+			if ("".equals(bidId)) {
+				continue;
+			} else {
+				break;
+			}
+		}
+		String bidMima = "";
+		logger.info("bidId=" + bidId);
+		// bidId="346";
+		if (!"".equals(bidId)) {
+			bidMima = getBidMima(bidId);
+		}
+		logger.info("Bid Mima=" + bidMima);
+		message.setBidid(Integer.parseInt(bidId));
+		message.setMima(bidMima);
+
+		Worker w = new Worker(message,"5000",ZHANGDAIYIXIAN);
+		Worker w2 = new Worker(message,"5000",ZHANGDAIYIXIAN);
+		Worker w3 = new Worker(message,"5000",ZHANGDAIYIXIAN);
+		Worker w4 = new Worker(message,"5000",ZHANGDAIYIXIAN);
+		Worker w5 = new Worker(message,"5000",ZHANGDAIYIXIAN);
+		Worker w6 = new Worker(message,"1000",ZHANGDAIYIXIAN);
+		Worker w7 = new Worker(message,"5000",ZHANGHUIFENG);
+		ExecutorService service = Executors.newFixedThreadPool(7);
 		logger.info("submit ");
 		service.submit(w);
 		service.submit(w2);
 		service.submit(w3);
 		service.submit(w4);
 		service.submit(w5);
+		service.submit(w6);
+		service.submit(w7);
 	}
 
-	private String getBidId() {
+	private String getBidMima(String bidId) {
+//		 bidId = "346";
+		String url = "http://wujinsuo.cn/index.php?ctl=deal&id=" + bidId
+				+ "&act=bid";
+		String mima = "";
 		try {
 			BasicCookieStore cookieStore = new BasicCookieStore();
 			CloseableHttpClient httpclient = HttpClients.custom()
 					.setDefaultCookieStore(cookieStore).build();
-			doLogin(cookieStore, httpclient);
-			
-			//time
+			doLogin(cookieStore, httpclient,ZHANGDAIYIXIAN);
+
+			HttpGet httpget = new HttpGet(url);
+			httpget.addHeader("Accept", ACCEPT);
+			httpget.addHeader("User-Agent", AGENT);
+
+			ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
+
+				public String handleResponse(final HttpResponse response)
+						throws ClientProtocolException, IOException {
+					int status = response.getStatusLine().getStatusCode();
+					if (status >= 200 && status < 300) {
+						HttpEntity entity = response.getEntity();
+						return entity != null ? EntityUtils.toString(entity)
+								: null;
+					} else {
+						throw new ClientProtocolException(
+								"Unexpected response status: " + status);
+					}
+				}
+
+			};
+			String resultString = httpclient.execute(httpget, responseHandler);
+			int index = resultString.indexOf("#mima\").val())!=");
+			mima = resultString.substring(index + 16, index + 20);
+			logger.info(mima);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return mima;
+	}
+
+	private String getBidId(Message message) {
+		try {
+			BasicCookieStore cookieStore = new BasicCookieStore();
+			CloseableHttpClient httpclient = HttpClients.custom()
+					.setDefaultCookieStore(cookieStore).build();
+			doLogin(cookieStore, httpclient,ZHANGDAIYIXIAN);
+
 			//
-			String mainUrl="http://www.wujinsuo.cn:80/index.php";
+
+			String bidName = message.getBidName();
+			// time
+			//
+			String mainUrl = "http://www.wujinsuo.cn:80/index.php";
 			HttpGet httpget = new HttpGet(mainUrl);
 			httpget.addHeader("Accept", ACCEPT);
 			httpget.addHeader("User-Agent", AGENT);
@@ -145,8 +229,8 @@ public class MessageController {
 					int status = response.getStatusLine().getStatusCode();
 					if (status >= 200 && status < 300) {
 						HttpEntity entity = response.getEntity();
-						return entity != null ? EntityUtils
-								.toString(entity) : null;
+						return entity != null ? EntityUtils.toString(entity)
+								: null;
 					} else {
 						throw new ClientProtocolException(
 								"Unexpected response status: " + status);
@@ -154,11 +238,36 @@ public class MessageController {
 				}
 
 			};
-			String resultString = httpclient.execute(httpget,
-					responseHandler);
-			
-			
-			
+			String resultString = httpclient.execute(httpget, responseHandler);
+			// parse html
+			Document doc = Jsoup.parse(resultString);
+			Elements links = doc.select("a[href]");
+
+			Element aElement = null;
+			for (Element e : links) {
+				List<Node> childNode = e.childNodes();
+				if (childNode.size() != 1)
+					continue;
+				Node node = childNode.get(0);
+				if ("span".equals(node.nodeName())) {
+					String html = node.outerHtml();
+					logger.info(html);
+					if (html.contains(bidName)) {
+						// okle
+						aElement = e;
+					}
+				}
+			}
+			if (aElement == null) {
+				// retry
+				return "";
+			} else {
+
+				String href = aElement.attr("href");
+				String bidId = StringUtils.substringAfter(href, "id=");
+				logger.info(bidId);
+				return bidId;
+			}
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -175,16 +284,19 @@ public class MessageController {
 
 	private class Worker implements Runnable {
 		private Message msg;
-
-		public Worker(Message message) {
+		private String money = "5000";
+		private String userName=ZHANGDAIYIXIAN;
+		public Worker(Message message, String money,String userName) {
 			this.msg = message;
+			this.money = money;
+			this.userName=userName;
 		}
 
 		@Override
 		public void run() {
 			logger.info("run worker.");
 			int bidid = msg.getBidid();
-			int mima = msg.getMima();
+			String mima = msg.getMima();
 			Date d = msg.getBidDate();
 			// Post login
 			BasicCookieStore cookieStore = new BasicCookieStore();
@@ -192,14 +304,14 @@ public class MessageController {
 					.setDefaultCookieStore(cookieStore).build();
 
 			try {
-				doLogin(cookieStore, httpclient);
+				doLogin(cookieStore, httpclient,userName);
 				// wait entil
 				// DateTime dt=new DateTime(2015,3,1,10,10,1);
 				while (System.currentTimeMillis() < d.getTime()) {
 					// logger.info("sleep 100,bidid:" + bidid + ",mima:" +
 					// mima);
 					try {
-						Thread.sleep(50);
+						Thread.sleep(100);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -207,10 +319,13 @@ public class MessageController {
 				}
 
 				String testUrl = "http://www.wujinsuo.cn/index.php?ctl=uc_center";
-				String realUrl = "http://www.wujinsuo.cn:80/index.php?ctl=deal&act=dobid&ajax=1&bid_money=5000&mima="
-						+ mima + "&user_paypwd=0&id=" + bidid;
+				String realUrl = "http://www.wujinsuo.cn:80/index.php?ctl=deal&act=dobid&ajax=1&bid_money="
+						+ money
+						+ "&mima="
+						+ mima
+						+ "&user_paypwd=0&id="
+						+ bidid;
 				logger.info("realUrl:" + realUrl);
-				System.out.println(realUrl);
 
 				HttpGet httpget = new HttpGet(realUrl);
 				httpget.addHeader("Accept", ACCEPT);
@@ -252,14 +367,15 @@ public class MessageController {
 	}
 
 	private void doLogin(BasicCookieStore cookieStore,
-			CloseableHttpClient httpclient) throws URISyntaxException,
+			CloseableHttpClient httpclient,String userName) throws URISyntaxException,
 			IOException, ClientProtocolException {
 		HttpUriRequest login = RequestBuilder
 				.post()
 				.setUri(new URI(
 						"http://www.wujinsuo.cn:80/index.php?ctl=user&act=dologin"))
-				.addParameter("email", "zhangdaiyixian")
+				.addParameter("email", userName)
 				.addParameter("user_pwd", "070500").build();
+		
 		CloseableHttpResponse response2 = httpclient.execute(login);
 		try {
 			HttpEntity entity = response2.getEntity();

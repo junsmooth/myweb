@@ -18,10 +18,11 @@
 				<a th:href="@{/}" href="messages.html"> Messages </a>
 			</div>
 
-			<label>Bid ID</label> <input type="text" th:field="*{bidid}" /> <label>Mi
-				Ma</label> <input type="text" th:field="*{mima}" /> <label>Bid
-				Time</label> <input type="text" th:field="*{bidDate}"
-				value="2015-03-01 10:10:00" />
+			<label>Bid Number(201503***)</label> <input type="text" th:field="*{bidName}" /> 
+			<label>Out Time 10:06</label> <input type="text" th:field="*{bidOpenTime}"
+				value="2015-03-02 10:06:10" />
+			<label>Bid Time 10:10</label> <input type="text" th:field="*{bidDate}"
+				value="2015-03-02 10:10:00" />
 			<!--  <label for="summary">Summary</label>
         <input type="text"
             th:field="*{summary}"

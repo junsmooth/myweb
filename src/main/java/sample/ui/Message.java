@@ -31,23 +31,43 @@ public class Message {
 	// @NotEmpty(message = "Summary is required.")
 	private String summary;
 
+	private String bidName;
 	private int bidid;
-	private int mima;
+	private String mima;
 
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date bidDate;
 
 	@Override
 	public String toString() {
 		return "Message [id=" + id + ", text=" + text + ", summary=" + summary
-				+ ", bidid=" + bidid + ", mima=" + mima + ", bidDate="
-				+ bidDate + ", created=" + created + "]";
+				+ ", bidName=" + bidName + ", bidid=" + bidid + ", mima="
+				+ mima + ", bidDate=" + bidDate + ", bidOpenTime="
+				+ bidOpenTime + ", created=" + created + "]";
 	}
+
+	public String getBidName() {
+		return bidName;
+	}
+
+	public void setBidName(String bidName) {
+		this.bidName = bidName;
+	}
+
+	public Date getBidOpenTime() {
+		return bidOpenTime;
+	}
+
+	public void setBidOpenTime(Date bidOpenTime) {
+		this.bidOpenTime = bidOpenTime;
+	}
+
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date bidOpenTime;
 
 	public int getBidid() {
 		return bidid;
 	}
-
-	@DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
-	private Date bidDate;
 
 	public Date getBidDate() {
 		return bidDate;
@@ -61,11 +81,12 @@ public class Message {
 		this.bidid = bidid;
 	}
 
-	public int getMima() {
+
+	public String getMima() {
 		return mima;
 	}
 
-	public void setMima(int mima) {
+	public void setMima(String mima) {
 		this.mima = mima;
 	}
 
