@@ -146,22 +146,22 @@ public class MessageController {
 		message.setBidid(Integer.parseInt(bidId));
 		message.setMima(bidMima);
 
-		Worker w = new Worker(message,"5000",ZHANGDAIYIXIAN);
-		Worker w2 = new Worker(message,"5000",ZHANGDAIYIXIAN);
-		Worker w3 = new Worker(message,"5000",ZHANGDAIYIXIAN);
-		Worker w4 = new Worker(message,"5000",ZHANGDAIYIXIAN);
-		Worker w5 = new Worker(message,"5000",ZHANGDAIYIXIAN);
-		Worker w6 = new Worker(message,"1000",ZHANGDAIYIXIAN);
-		Worker w7 = new Worker(message,"5000",ZHANGHUIFENG);
+		Worker w = new Worker(message,"3000",ZHANGDAIYIXIAN);
+		Worker w2 = new Worker(message,"3000",ZHANGDAIYIXIAN);
+		Worker w3 = new Worker(message,"3000",ZHANGDAIYIXIAN);
+//		Worker w4 = new Worker(message,"5000",ZHANGDAIYIXIAN);
+//		Worker w5 = new Worker(message,"5000",ZHANGDAIYIXIAN);
+//		Worker w6 = new Worker(message,"1000",ZHANGDAIYIXIAN);
+//		Worker w7 = new Worker(message,"5000",ZHANGHUIFENG);
 		ExecutorService service = Executors.newFixedThreadPool(7);
 		logger.info("submit ");
 		service.submit(w);
 		service.submit(w2);
 		service.submit(w3);
-		service.submit(w4);
-		service.submit(w5);
-		service.submit(w6);
-		service.submit(w7);
+//		service.submit(w4);
+//		service.submit(w5);
+//		service.submit(w6);
+//		service.submit(w7);
 	}
 
 	private String getBidMima(String bidId) {
@@ -284,7 +284,7 @@ public class MessageController {
 
 	private class Worker implements Runnable {
 		private Message msg;
-		private String money = "5000";
+		private String money = "3000";
 		private String userName=ZHANGDAIYIXIAN;
 		public Worker(Message message, String money,String userName) {
 			this.msg = message;
@@ -323,6 +323,10 @@ public class MessageController {
 						+ money
 						+ "&mima="
 						+ mima
+						+ "&user_paypwd=0&id="
+						+ bidid;
+				realUrl="http://www.wujinsuo.cn:80/index.php?ctl=deal&act=dobid&ajax=1&bid_money="
+						+ money
 						+ "&user_paypwd=0&id="
 						+ bidid;
 				logger.info("realUrl:" + realUrl);
